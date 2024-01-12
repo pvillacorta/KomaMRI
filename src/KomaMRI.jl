@@ -1,5 +1,5 @@
-module KomaMRI
-
+module KomaMRI 
+ 
 # IMPORT PACKAGES
 using Reexport
 @reexport using KomaMRICore

@@ -1,11 +1,5 @@
 abstract type MotionModel end
 
-#Motion models:
-include("phantom/motion/SimpleMotion.jl") 
-include("phantom/motion/ArbitraryMotion.jl") 
-include("phantom/motion/NoMotion.jl")
-
-
 """
     obj = Phantom(name, x, y, z, ρ, T1, T2, T2s, Δw, Dλ1, Dλ2, Dθ, ux, uy, uz)
 

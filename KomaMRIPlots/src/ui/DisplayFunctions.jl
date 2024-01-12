@@ -733,7 +733,8 @@ function plot_phantom_map(
 	end
 	cmin_key *= factor
 	cmax_key *= factor
-
+	x0 = -maximum(abs.([ph.x ph.y ph.z]))*1e2
+    xf =  maximum(abs.([ph.x ph.y ph.z]))*1e2
 	#Layout
 	bgcolor, text_color, plot_bgcolor, grid_color, sep_color = theme_chooser(darkmode)
 	l = Layout(;title=ph.name*": "*string(key),
@@ -746,18 +747,12 @@ function plot_phantom_map(
 		xaxis_zerolinecolor=grid_color,
 		yaxis_zerolinecolor=grid_color,
 		font_color=text_color,
-
-		xaxis_range=[x0,xf]*1e2,
-		yaxis_range=[x0,xf]*1e2,
-		zaxis_range=[x0,xf]*1e2,
-
 		scene=attr(
-			xaxis=attr(title="x",ticksuffix=" cm",backgroundcolor=plot_bgcolor,gridcolor=grid_color,zerolinecolor=grid_color),
-			yaxis=attr(title="y",ticksuffix=" cm",backgroundcolor=plot_bgcolor,gridcolor=grid_color,zerolinecolor=grid_color),
-			zaxis=attr(title="z",ticksuffix=" cm",backgroundcolor=plot_bgcolor,gridcolor=grid_color,zerolinecolor=grid_color),
+			xaxis=attr(title="x",range=[x0,xf],ticksuffix=" cm",backgroundcolor=plot_bgcolor,gridcolor=grid_color,zerolinecolor=grid_color),
+			yaxis=attr(title="y",range=[x0,xf],ticksuffix=" cm",backgroundcolor=plot_bgcolor,gridcolor=grid_color,zerolinecolor=grid_color),
+			zaxis=attr(title="z",range=[x0,xf],ticksuffix=" cm",backgroundcolor=plot_bgcolor,gridcolor=grid_color,zerolinecolor=grid_color),
 			aspectmode="manual",
 			aspectratio=attr(x=1,y=1,z=1)),
-
 		margin=attr(t=50,l=0,r=0),
 		modebar=attr(orientation="h",bgcolor=bgcolor,color=text_color,activecolor=plot_bgcolor),
 		xaxis=attr(constrain="domain"),
@@ -769,12 +764,6 @@ function plot_phantom_map(
     if width !== nothing
         l.width = width
     end
-
-	Ux, Uy, Uz = initialize_motion(ph.mov, ph.x, ph.y, ph.z, [t0])
-	Ux = Ux===nothing ? 0 : reshape(Ux',(length(Ux),))
-	Uy = Uy===nothing ? 0 : reshape(Uy',(length(Uy),))
-	Uz = Uz===nothing ? 0 : reshape(Uz',(length(Uz),))
-
 	if view_2d
 	h = scatter( x=(ph.x .+ ph.ux(ph.x,ph.y,ph.z,t0*1e-3))*1e2,
 						y=(ph.y .+ ph.uy(ph.x,ph.y,ph.z,t0*1e-3))*1e2,

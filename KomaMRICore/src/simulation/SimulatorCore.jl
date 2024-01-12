@@ -2,58 +2,8 @@ abstract type SimulationMethod end #get all available types by using subtypes(Ko
 abstract type SpinStateRepresentation{T<:Real} end #get all available types by using subtypes(KomaMRI.SpinStateRepresentation)
 
 #Defined methods:
-include("Bloch/BlochSimulationMethod.jl")       #Defines Bloch simulation method
-include("Bloch/BlochDictSimulationMethod.jl")   #Defines BlochDict simulation method
-
-"""
-    sim_params = default_sim_params(sim_params=Dict{String,Any}())
-
-This function returns a dictionary containing default simulation parameters while also
-allowing the user to define some of them.
-
-# Arguments
-- `sim_params`: (`::Dict{String,Any}`, `=Dict{String,Any}()`) user-defined dictionary with
-    simulation parameters. The following lists its keys along with their possible values:
-    * "return_type": defines the output of the [`simulate`](@ref) function. Possible values
-        are `"raw"`, `"mat"`, and `"state"`, corresponding to outputting a MRIReco
-        `RawAcquisitionData`, the signal values, and the last magnetization state of the
-        simulation, respectively
-    * "sim_method": defines the type of simulation. The default value is `Bloch()`, but you
-        can alternatively use the `BlochDict()` simulation method. Moreover, you have the
-        flexibility to create your own methods without altering the KomaMRI source code
-    * "Δt": raster time for gradients
-    * "Δt_rf": raster time for RFs
-    * "precision": defines the floating-point simulation precision. You can choose between
-        `"f32"` and `"f64"` to use `Float32` and `Float64` primitive types, respectively.
-        It's important to note that, especially for GPU operations, using `"f32"` is
-        generally much faster
-    * "Nblocks": divides the simulation into a specified number of time blocks. This parameter
-        is designed to conserve RAM resources, as **KomaMRI** computes a series of
-        simulations consecutively, each with the specified number of blocks determined by
-        the value of `"Nblocks"`
-    * "Nthreads": divides the **Phantom** into a specified number of threads. Because spins
-        are modeled independently of each other, **KomaMRI** can solve simulations in
-        parallel threads, speeding up the execution time
-    * "gpu": is a boolean that determines whether to use GPU or CPU hardware resources, as
-        long as they are available on the host computer
-    * "gpu_device": sets the index ID of the available GPU in the host computer
-
-# Returns
-- `sim_params`: (`::Dict{String,Any}`) dictionary with simulation parameters
-"""
-function default_sim_params(sim_params=Dict{String,Any}())
-    sampling_params = KomaMRIBase.default_sampling_params()
-    get!(sim_params, "gpu", true); if sim_params["gpu"] check_use_cuda(); sim_params["gpu"] &= use_cuda[] end
-    get!(sim_params, "gpu_device", 0)
-    get!(sim_params, "Nthreads", sim_params["gpu"] ? 1 : Threads.nthreads())
-    get!(sim_params, "Nblocks", 20)
-    get!(sim_params, "Δt", sampling_params["Δt"])
-    get!(sim_params, "Δt_rf", sampling_params["Δt_rf"])
-    get!(sim_params, "sim_method", Bloch())
-    get!(sim_params, "precision", "f32")
-    get!(sim_params, "return_type", "raw")
-    return sim_params
-end
+include("Bloch/BlochSimulationMethod.jl") #Defines Bloch simulation method
+include("Bloch/BlochDictSimulationMethod.jl") #Defines BlochDict simulation method
 
 """
     sim_params = default_sim_params(sim_params=Dict{String,Any}())
@@ -127,15 +77,13 @@ separating the spins of the phantom `obj` in `Nthreads`.
 """
 function run_spin_precession_parallel!(obj::Phantom{T}, seq::DiscreteSequence{T}, sig::AbstractArray{Complex{T}},
     Xt::SpinStateRepresentation{T}, sim_method::SimulationMethod;
-    Nthreads = Threads.nthreads()) where {T<:Real}
+    Nthreads=Threads.nthreads()) where {T<:Real}
 
     parts = kfoldperm(length(obj), Nthreads)
     dims = [Colon() for i=1:output_Ndim(sim_method)] # :,:,:,... Ndim times
 
-    NVTX.@range "Precession Parallel" begin
-        ThreadsX.foreach(enumerate(parts)) do (i, p)
-            run_spin_precession!(@view(obj[p]), seq, @view(sig[dims...,i]), @view(Xt[p]), sim_method)
-        end
+    ThreadsX.foreach(enumerate(parts)) do (i, p)
+        run_spin_precession!(@view(obj[p]), seq, @view(sig[dims...,i]), @view(Xt[p]), sim_method)
     end
 
     return nothing
@@ -167,10 +115,8 @@ function run_spin_excitation_parallel!(obj::Phantom{T}, seq::DiscreteSequence{T}
     parts = kfoldperm(length(obj), Nthreads)
     dims = [Colon() for i=1:output_Ndim(sim_method)] # :,:,:,... Ndim times
 
-    NVTX.@range "Excitation Parallel" begin
-        ThreadsX.foreach(enumerate(parts)) do (i, p)
-            run_spin_excitation!(@view(obj[p]), seq, @view(sig[dims...,i]), @view(Xt[p]), sim_method)
-        end
+    ThreadsX.foreach(enumerate(parts)) do (i, p)
+        run_spin_excitation!(@view(obj[p]), seq, @view(sig[dims...,i]), @view(Xt[p]), sim_method)
     end
 
     return nothing
@@ -207,9 +153,8 @@ function run_sim_time_iter!(obj::Phantom, seq::DiscreteSequence, sig::AbstractAr
     # Simulation
     rfs = 0
     samples = 1
-    progress_bar = Progress(Nblocks;desc="Running simulation...")
-
-    for (block, p) = enumerate(parts) 
+    progress_bar = Progress(Nblocks)
+    for (block, p) = enumerate(parts)
         seq_block = @view seq[p]
         # Params
         # excitation_bool = is_RF_on(seq_block) #&& is_ADC_off(seq_block) #PATCH: the ADC part should not be necessary, but sometimes 1 sample is identified as RF in an ADC block
@@ -375,7 +320,6 @@ function simulate(
         Xt   = Xt   |> f64 #SpinStateRepresentation
         sig  = sig  |> f64 #Signal
     end
-
     # Simulation
     @info "Running simulation in the $(sim_params["gpu"] ? "GPU ($gpu_name)" : "CPU with $(sim_params["Nthreads"]) thread(s)")" koma_version=__VERSION__ sim_method = sim_params["sim_method"] spins = length(obj) time_points = length(seqd.t) adc_points=Ndims[1]
     @time timed_tuple = @timed run_sim_time_iter!(obj, seqd, sig, Xt, sim_params["sim_method"]; Nblocks=length(parts), Nthreads=sim_params["Nthreads"], parts, excitation_bool, w)

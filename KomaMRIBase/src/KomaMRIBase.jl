@@ -12,10 +12,6 @@ using Interpolations
 using MRIBase
 @reexport using MRIBase: Profile, RawAcquisitionData, AcquisitionData, AcquisitionHeader, EncodingCounters, Limit
 using MAT   # For loading example phantoms
-#StatsBase
-using StatsBase
-#LinearAlgebra
-using LinearAlgebra
 
 global γ = 42.5774688e6; # Hz/T gyromagnetic constant for H1, JEMRIS uses 42.5756 MHz/T
 
@@ -46,16 +42,14 @@ export discretize, get_adc_phase_compensation, get_adc_sampling_times
 export kfoldperm, trapz, cumtrapz
 # Phantom
 export brain_phantom2D, brain_phantom3D, pelvis_phantom2D
-export MotionModel, SimpleMotion, NoMotion, ArbitraryMotion
-export get_displacements
 # Spinors
 export Spinor, Rx, Ry, Rz, Q, Un
 # Secondary
-export get_kspace, rotx, roty, rotz, rotation_matrix
+export get_kspace, rotx, roty, rotz
 # Additionals
 export get_flip_angles, is_RF_on, is_GR_on, is_ADC_on
 # Sequence related
-export get_M0, get_M1, get_M2, get_kspace, get_grad_area, set_grad_area!
+export get_M0, get_M1, get_M2, get_kspace
 
 # PulseDesigner submodule
 include("sequences/PulseDesigner.jl")

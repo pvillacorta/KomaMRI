@@ -1,5 +1,3 @@
-abstract type MotionModel end
-
 """
     obj = Phantom(name, x, y, z, ρ, T1, T2, T2s, Δw, Dλ1, Dλ2, Dθ, ux, uy, uz)
 
@@ -50,9 +48,10 @@ julia> obj.ρ
 	Dλ2::AbstractVector{T} = zeros(size(x))
 	Dθ::AbstractVector{T} =  zeros(size(x))
 	#Diff::Vector{DiffusionModel}  #Diffusion map
-
 	#Motion
-	motion = NoMotion()
+	ux::Function = (x,y,z,t)->0
+	uy::Function = (x,y,z,t)->0
+	uz::Function = (x,y,z,t)->0
 end
 
 """Size and length of a phantom"""
@@ -96,8 +95,10 @@ Base.getindex(obj::Phantom, p::AbstractRange) = begin
 			Dλ1=obj.Dλ1[p],
 			Dλ2=obj.Dλ2[p],
 			Dθ=obj.Dθ[p],
-			motion=obj.motion[p]
 			#Χ=obj.Χ[p], #TODO!
+			ux=obj.ux,
+			uy=obj.uy,
+			uz=obj.uz
 			)
 end
 
@@ -116,8 +117,10 @@ Base.view(obj::Phantom, p::AbstractRange) = begin
 			Dλ1=obj.Dλ1[p],
 			Dλ2=obj.Dλ2[p],
 			Dθ=obj.Dθ[p],
-			motion=obj.motion[p]
 			#Χ=obj.Χ[p], #TODO!
+			ux=obj.ux,
+			uy=obj.uy,
+			uz=obj.uz
 			)
 end
 
@@ -136,8 +139,10 @@ end
 		Dλ1=[s1.Dλ1;s2.Dλ1],
 		Dλ2=[s1.Dλ2;s2.Dλ2],
 		Dθ=[s1.Dθ;s2.Dθ],
-		motion=s1.motion+s2.motion
 		#Χ=obj.Χ[p], #TODO!
+		ux=s1.ux,
+		uy=s1.uy,
+		uz=s1.uz
 	)
 end
 
@@ -156,8 +161,10 @@ end
 		Dλ1=obj.Dλ1,
 		Dλ2=obj.Dλ2,
 		Dθ=obj.Dθ,
-		motion=obj.motion
 		#Χ=obj.Χ[p], #TODO!
+		ux=obj.ux,
+		uy=obj.uy,
+		uz=obj.uz
 	)
 end
 

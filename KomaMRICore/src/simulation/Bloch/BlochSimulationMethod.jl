@@ -40,13 +40,8 @@ precession.
 - `S`: (`Vector{ComplexF64}`) raw signal over time
 - `M0`: (`::Vector{Mag}`) final state of the Mag vector
 """
-NVTX.@annotate function run_spin_precession!(
-        p::Phantom{T}, 
-        seq::DiscreteSequence{T}, 
-        sig::AbstractArray{Complex{T}},
-        M::Mag{T}, 
-        sim_method::Bloch
-    ) where {T<:Real}
+function run_spin_precession!(p::Phantom{T}, seq::DiscreteSequence{T}, sig::AbstractArray{Complex{T}},
+    M::Mag{T}, sim_method::Bloch) where {T<:Real}
     #Simulation
     #Motion
     xt, yt, zt, flags = get_displacements(p.motion, p.x, p.y, p.z, seq.t)
@@ -62,14 +57,6 @@ NVTX.@annotate function run_spin_precession!(
     tp = cumsum(seq.Δt) # t' = t - t0
     dur = sum(seq.Δt)   # Total length, used for signal relaxation
     Mxy = [M.xy M.xy .* exp.(1im .* ϕ .- tp' ./ p.T2)] #This assumes Δw and T2 are constant in time
-    M.z .= M.z .* exp.(-dur ./ p.T1) .+ p.ρ .* (1 .- exp.(-dur ./ p.T1))
-    # Flow
-    if flags !== nothing
-        reset = any(flags; dims=2)
-        flags = .!(cumsum(flags; dims=2) .>= 1)
-        Mxy .*= flags
-        M.z[reset] = p.ρ[reset]
-    end
     M.xy .= Mxy[:, end]
     #Acquired signal
     sig .= transpose(sum(Mxy[:, findall(seq.ADC)]; dims=1)) #<--- TODO: add coil sensitivities

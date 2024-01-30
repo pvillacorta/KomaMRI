@@ -181,6 +181,13 @@ function update_blink_window_progress!(w::Nothing, block, Nblocks)
     return nothing
 end
 
+function update_blink_window_progress!(w::String, block, Nblocks)
+    io = open(w,"w") # "w" mode overwrites last status value, even if it was not read yet
+    progress = string(floor(Int, block / Nblocks * 100))
+    write(io,progress)
+    close(io)
+ end
+
 """
 Separates the discrete sequence into Nblocks, ensuring that each block has either
 RF-on or RF-off. The function returns the ranges of the discrete sequence blocks along

@@ -5,7 +5,7 @@ if nprocs() <= 1
 end
 
 @everywhere begin
-   cd("/home/export/personal/pvilayl/CardSimFusion/Pablo/TFM/KomaMRI.jl")
+   cd("/home/export/personal/pvilayl/KomaMRI.jl")
    using Pkg
    Pkg.activate(".")
    Pkg.instantiate()
@@ -44,6 +44,31 @@ end
 
 
 # ---------------------------- API METHODS ---------------------------------
+@get "/foo" function (req::HTTP.Request)
+   global statusFile = tempname()
+   touch(statusFile)
+
+   mat  = [1        2      5;           # cod
+           5.87e-4  0.01   0;           # dur
+           0        0      0;           # gx
+           0        0      0;           # gy
+           1        0      0;           # gz
+           10e-6    0      0;           # b1x
+           0        0      0;           # b1y
+           0        0      0;           # Δf
+           0        0      0.4;         # fov
+           0        0      201]         # n
+
+   vec  =  [1.5;          #B0
+            10e-6;        #B1
+            2e-6;         #Delta_t
+            60e-3;        #Gmax
+            500]          #Smax
+
+   image =  @spawnat 2 sim(mat, vec, statusFile)
+   # image =  sim(mat, vec, statusFile)
+end
+
 @post "/simulate" function(req::HTTP.Request)
    global aux = JSON3.read(req.body)
    N_blocks = length(aux.mat[1])     # Number of columns (blocks)
@@ -59,8 +84,8 @@ end
    touch(statusFile)
 
    # Simulation  (asynchronous. It should not block the HTTP 202 Response)
-   global result = @spawnat 2 sim(mat,vec,statusFile)          # Process 2 executes simulation
-   # global result = remotecall(sim, 2, mat, vec, statusFile)      # Equivalent to expression above
+   # global result = @spawnat 2 sim(mat,vec,statusFile)          # Process 2 executes simulation
+   global result = remotecall(sim, 2, mat, vec, statusFile)      # Equivalent to expression above
 
    # while 1==1
    #    io = open(statusFile,"r")
@@ -78,7 +103,6 @@ end
    # 202: Partial Content
    return HTTP.Response(202,headers)
 end
-
 
 """
                   [ -1,      if the simulation has not started yet
@@ -115,4 +139,4 @@ end
 
 # ---------------------------------------------------------------------------
 
-serve(host="0.0.0.0")
+serve(host="0.0.0.0",port=8085)

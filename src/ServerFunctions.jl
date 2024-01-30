@@ -115,7 +115,7 @@ end
 
 "Obtain raw RM signal. Input arguments are a 2D matrix (sequence) and a 1D vector (system parameters)"
 sim(mat,vec,path) = begin
-   print("Prueba")
+   print("Prueba sim")
 
    # Phantom
    phant = KomaMRI.brain_phantom2D()
@@ -130,7 +130,7 @@ sim(mat,vec,path) = begin
    simParams = Dict{String,Any}()
 
    # Simulation
-   raw_signal = simulate(phant, seq, sys, path; simParams, w=nothing)
+   raw_signal = simulate(phant, seq, sys; sim_params=simParams, w=path)
 
    # Reconstruction
    image = recon(raw_signal)
@@ -143,3 +143,7 @@ sim(mat,vec,path) = begin
 
    image
 end
+
+    
+
+     

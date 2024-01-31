@@ -1,6 +1,8 @@
-const server = "http://tebas.lpi.tel.uva.es:8085"
+// const server = "http://tebas.lpi.tel.uva.es:8080"
+const server = "http://127.0.0.1:8080"
 
 function callKomaMRI(){
+    var phantom = document.getElementById("phantom");
     canvas.height = 0; canvas.width = 0;
 
     // Input parameters: mat (-> Sequence) & vec (-> Scanner)
@@ -23,6 +25,7 @@ function callKomaMRI(){
                  500];         // Smax
 
     var params = {
+        phantom: phantom.value,
         mat: mat,
         vec: vec
     }

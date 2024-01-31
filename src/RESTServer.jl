@@ -44,30 +44,6 @@ end
 
 
 # ---------------------------- API METHODS ---------------------------------
-@get "/foo" function (req::HTTP.Request)
-   global statusFile = tempname()
-   touch(statusFile)
-
-   mat  = [1        2      5;           # cod
-           5.87e-4  0.01   0;           # dur
-           0        0      0;           # gx
-           0        0      0;           # gy
-           1        0      0;           # gz
-           10e-6    0      0;           # b1x
-           0        0      0;           # b1y
-           0        0      0;           # Δf
-           0        0      0.4;         # fov
-           0        0      201]         # n
-
-   vec  =  [1.5;          #B0
-            10e-6;        #B1
-            2e-6;         #Delta_t
-            60e-3;        #Gmax
-            500]          #Smax
-
-   image =  @spawnat 2 sim(mat, vec, statusFile)
-   # image =  sim(mat, vec, statusFile)
-end
 
 @post "/simulate" function(req::HTTP.Request)
    global aux = JSON3.read(req.body)
@@ -79,18 +55,21 @@ end
    end
 
    vec::Vector{Float64} = aux.vec
+   phantom::String = aux.phantom
 
    global statusFile = tempname()
    touch(statusFile)
+   print(statusFile, '\n')
 
    # Simulation  (asynchronous. It should not block the HTTP 202 Response)
-   # global result = @spawnat 2 sim(mat,vec,statusFile)          # Process 2 executes simulation
-   global result = remotecall(sim, 2, mat, vec, statusFile)      # Equivalent to expression above
+   global result = @spawnat 2 sim(mat,vec,phantom,statusFile)          # Process 2 executes simulation
+   # global result = remotecall(sim, 2, mat, vec, statusFile)      # Equivalent to expression above
 
    # while 1==1
    #    io = open(statusFile,"r")
    #    if (!eof(io))
-   #       global simProgress = read(io,Int64)
+   #       global simProgress = read(io,Int32)
+   #       print("leido\n")
    #    end
    #    close(io)
    #    print("Progreso: ", simProgress, '\n')
@@ -117,7 +96,7 @@ end
 @get "/simulate/{simulationId}" function(req::HTTP.Request, simulationId)
    io = open(statusFile,"r")
    if (!eof(io))
-      global simProgress = read(io,Int64)
+      global simProgress = read(io,Int32)
    end
    close(io)
 

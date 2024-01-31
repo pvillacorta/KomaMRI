@@ -104,7 +104,7 @@ recon(raw_signal) = begin
 
    aux = @timed reconstruction(acqData, recParams)
    image  = reshape(aux.value.data,Nx,Ny,:)
-   kspace = fftc(reshape(aux.value.data,Nx,Ny,:))
+   kspace = KomaMRI.fftc(reshape(aux.value.data,Nx,Ny,:))
 
    # Conversion to uint8
    image_aux = abs.(image[:,:,1])
@@ -114,11 +114,13 @@ recon(raw_signal) = begin
 end
 
 "Obtain raw RM signal. Input arguments are a 2D matrix (sequence) and a 1D vector (system parameters)"
-sim(mat,vec,path) = begin
-   print("Prueba sim")
-
+sim(mat,vec,phantom,path) = begin
    # Phantom
-   phant = KomaMRI.brain_phantom2D()
+   if phantom == "brain"
+      phant = KomaMRI.brain_phantom2D()
+   elseif phantom == "pelvis"
+      phant = KomaMRI.pelvis_phantom2D()
+   end
 
    # Scanner
    sys = vec_to_scanner(vec)

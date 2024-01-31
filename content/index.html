@@ -22,7 +22,14 @@
   <body>
     <script src="app.js"></script>
     <h1>KomaMRI Simulator</h1>
-    <button id="simButton" onclick="callKomaMRI()">KomaMRI</button>
+
+    <label for="phantom">Phantom:</label>
+    <select id="phantom" name="phantom">
+      <option value="brain">Brain</option>
+      <option value="pelvis">Pelvis</option>
+    </select>
+
+    <button id="simButton" onclick="callKomaMRI()">Simulate</button>
     <p id="response"></p>
 
     <div id="myProgress">

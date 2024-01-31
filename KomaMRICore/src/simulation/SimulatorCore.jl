@@ -183,7 +183,7 @@ end
 
 function update_blink_window_progress!(w::String, block, Nblocks)
     io = open(w,"w") # "w" mode overwrites last status value, even if it was not read yet
-    progress = string(floor(Int, block / Nblocks * 100))
+    progress = trunc(Int, block / Nblocks * 100)
     write(io,progress)
     close(io)
  end

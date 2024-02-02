@@ -1,7 +1,7 @@
-// const server = "http://tebas.lpi.tel.uva.es:8080"
-const server = "http://127.0.0.1:8080"
+const server = "http://tebas.lpi.tel.uva.es:8085"
+// const server = "http://127.0.0.1:8080"
 
-function callKomaMRI(){
+function komaMRISim(){
     var phantom = document.getElementById("phantom");
     canvas.height = 0; canvas.width = 0;
 
@@ -117,3 +117,25 @@ function requestResult(loc){
             }
         })
 }
+
+
+function plot_seq(seq_json){
+    const obj = JSON.parse(seq_json);
+    fetch(server + "/plot",{
+        method: "POST",
+        headers:{
+            "Content-type": "application/json",
+        },
+        body: JSON.stringify(obj)})
+    .then(res => {
+        if (res.status === 200) {
+            console.log(res.body);
+        } else {
+            // Manejar el error
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
+}
+

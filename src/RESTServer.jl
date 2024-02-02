@@ -45,6 +45,7 @@ end
 
 # ---------------------------- API METHODS ---------------------------------
 
+## SIMULATION
 @post "/simulate" function(req::HTTP.Request)
    global aux = JSON3.read(req.body)
    N_blocks = length(aux.mat[1])     # Number of columns (blocks)
@@ -116,6 +117,11 @@ end
 end
 
 
+## PLOT SEQUENCE
+@post "/plot" function(req::HTTP.Request)
+   display(req.body)
+   return HTTP.Response(200,body="Exito")
+end
 # ---------------------------------------------------------------------------
 
 serve(host="0.0.0.0",port=8085)

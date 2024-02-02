@@ -13,7 +13,6 @@ end
 
 using Oxygen
 using HTTP
-using JSON3
 
 using StatsBase, FFTW
 using StructTypes
@@ -22,6 +21,7 @@ using StructTypes
    using SharedArrays
    using KomaMRI
    using LinearAlgebra
+   using JSON3
 end
 
 
@@ -119,7 +119,9 @@ end
 
 ## PLOT SEQUENCE
 @post "/plot" function(req::HTTP.Request)
-   display(req.body)
+   data = json(req)
+   sys = Scanner()
+   json_to_seq(data,sys)
    return HTTP.Response(200,body="Exito")
 end
 # ---------------------------------------------------------------------------

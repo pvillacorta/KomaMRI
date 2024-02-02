@@ -1,4 +1,5 @@
-const server = "http://tebas.lpi.tel.uva.es:8085"
+// const server = "http://tebas.lpi.tel.uva.es:8085"
+const server = "http://127.0.0.1:8085"
 // const server = "http://127.0.0.1:8080"
 
 function komaMRISim(){
@@ -119,6 +120,13 @@ function requestResult(loc){
 }
 
 
+function plot_selected_seq(){
+    openFile(function (seq_json) {
+        console.log('File content:', seq_json);
+        plot_seq(seq_json);
+    });
+}
+
 function plot_seq(seq_json){
     const obj = JSON.parse(seq_json);
     fetch(server + "/plot",{
@@ -137,5 +145,36 @@ function plot_seq(seq_json){
     .catch(error => {
         console.error("Error:", error);
     });
+}
+
+
+function openFile(callback){
+    // Get the file input element
+    var fileInput = document.getElementById('fileInput');
+
+    // Check if any file is selected
+    if (fileInput.files.length > 0) {
+        // Get the selected file
+        var selectedFile = fileInput.files[0];
+
+        // Create a new FileReader
+        var reader = new FileReader();
+
+        // Set up the FileReader to handle the file content
+        reader.onload = function (e) {
+            // e.target.result contains the file content
+            var fileContent = e.target.result;
+            // console.log('File content:', fileContent);
+            callback(fileContent); ;
+
+            // You can now do something with the file content, such as display it on the page or process it further.
+        };
+
+        // Read the file as text
+        reader.readAsText(selectedFile);
+    } else {
+        console.log('No file selected.');
+        return 0;
+    }
 }
 

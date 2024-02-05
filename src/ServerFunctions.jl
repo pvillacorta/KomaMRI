@@ -93,7 +93,9 @@ end
 
 "Convert a json string containing sequence information into a KomaMRICore.Sequence object"
 json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
-   seq = Sequence()
+   global seq = Sequence()
+   # global R = rotation_matrix()
+   
    blocks = json_seq["blocks"]
 
    function isChild(index::Int)
@@ -102,13 +104,14 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
          for j in eachindex(children)
             if children[j].number == (index - 1)
                return true
+            end
          end
       end
       return false
    end
 
    function addToSeq(block::JSON3.Object, rep::Int) 
-      if block["cod"] == 0       # Group
+      if block["cod"] == 0          # <------------- Group
          repetitions =  block["repetitions"]
          children =     block["children"]
          for i in 0:(repetitions-1)
@@ -116,11 +119,29 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
                addToSeq(blocks[children[j].number+1],i)
             end
          end
-      elseif block["cod"] == 1       # Excitation
-      elseif block["cod"] == 2       # Delay
-      elseif block["cod"] in [3,4]   # Dephase or Readout
-      elseif block["cod"] == 5       # EPI
-      elseif block["cod"] == 6       # GRE   
+
+      elseif block["cod"] == 1       # <------------- Excitation
+         print("Excitation\n")
+         
+
+
+      elseif block["cod"] == 2       # <------------- Delay
+         print("Delay\n")
+
+      elseif block["cod"] in [3,4]   # <------------- Dephase or Readout
+         if block["cod"] == 3
+            print("Dephase\n")
+         elseif block["cod"] == 4
+            print("Readout\n")
+         end
+
+      elseif block["cod"] == 5       # <------------- EPI
+         print("EPI\n")
+
+      elseif block["cod"] == 6       # <------------- GRE  
+         print("GRE\n")
+
+      end 
    end
 
    for i in eachindex(blocks)
@@ -128,6 +149,8 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
          addToSeq(blocks[i],0)
       end
    end
+
+end
 
 #    global seq = Sequence()
 #    global R = rotation_matrix()
@@ -221,7 +244,7 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
 #    seq.DEF = Dict("Nx"=>N_x,"Ny"=>N_y,"Nz"=>1)
 
 #    R*seq
-# end
+
 
 "Obtain the reconstructed image from raw_signal (obtained from simulation)"
 recon(raw_signal) = begin

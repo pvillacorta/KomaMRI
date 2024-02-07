@@ -44,6 +44,9 @@ end
 
 
 # ---------------------------- API METHODS ---------------------------------
+@get "/greet" function(req::HTTP.Request)
+   return "Hello world!"
+end
 
 ## SIMULATION
 @post "/simulate" function(req::HTTP.Request)
@@ -77,6 +80,7 @@ end
    #    sleep(0.2)
    # end
 
+   # Actualizar tabla de correspondencias simulación-proceso
 
    headers = ["Location" => string("/simulate/",simulationId)]
    global simulationId += 1
@@ -118,12 +122,12 @@ end
 
 
 ## PLOT SEQUENCE
-@post "/plot" function(req::HTTP.Request)
-   data = json(req)
-   sys = Scanner()
-   json_to_seq(data,sys)
-   return HTTP.Response(200,body="Exito")
-end
+# @post "/plot" function(req::HTTP.Request)
+#    data = json(req)
+#    sys = Scanner()
+#    json_to_seq(data,sys)
+#    return HTTP.Response(200,body="Exito")
+# end
 # ---------------------------------------------------------------------------
 
 serve(host="0.0.0.0",port=8085)

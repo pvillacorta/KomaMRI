@@ -18,16 +18,15 @@ using StatsBase, FFTW
 using StructTypes
 
 @everywhere begin
-   using SharedArrays
    using KomaMRI
    using LinearAlgebra
    using JSON3
 end
 
 
-staticfiles("content", "static")  # Give access to files in content directory
-                                  # to access to them from the client, we should make
-                                  # a request to http://serverdir:port/static/filename
+dynamicfiles("content", "dynamic") # Give access to files in content directory
+                                   # to access to them from the client, we should make
+                                   # a request to http://serverdir:port/dynamic/filename
 
 # ------------------------------- STRUCTS ------------------------------------
 global simulationId = 1
@@ -44,6 +43,10 @@ end
 
 
 # ---------------------------- API METHODS ---------------------------------
+@get "/" function(req::HTTP.Request)
+   return render_html("content/index.html")
+end
+
 @get "/greet" function(req::HTTP.Request)
    return "Hello world!"
 end
@@ -67,7 +70,6 @@ end
 
    # Simulation  (asynchronous. It should not block the HTTP 202 Response)
    global result = @spawnat 2 sim(mat,vec,phantom,statusFile)          # Process 2 executes simulation
-   # global result = remotecall(sim, 2, mat, vec, statusFile)      # Equivalent to expression above
 
    # while 1==1
    #    io = open(statusFile,"r")

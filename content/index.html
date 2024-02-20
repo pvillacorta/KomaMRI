@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Probando API REST</title>
+    <meta charset="UTF-8">
+    <meta content="">
+    <style>
+      #myProgress {
+        width: 100%;
+        background-color: #ddd;
+        visibility: collapse;
+      }
+
+      #myBar {
+        width: 0%;
+        height: 30px;
+        background-color: #1d9bf0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <script src="dynamic/app.js"></script>
+    <h1>KomaMRI Simulator</h1>
+
+    <label for="phantom">Phantom:</label>
+    <select id="phantom" name="phantom">
+      <option value="brain">Brain</option>
+      <option value="pelvis">Pelvis</option>
+    </select>
+
+    <button id="simButton" onclick="komaMRISim()">Simulate</button>
+    <p id="response"></p>
+
+    <div id="myProgress">
+      <div id="myBar"></div>
+    </div>
+
+    <canvas id="canvas" height="0" width="0"></canvas>
+
+    <div style="display:flex; flex-direction: column">
+      <div>
+        <h2>Display sequence</h2>
+        <label for="sequence">Choose a sequence file:</label>
+        <input type="file" id="fileInput" name="fileInput" accept="application/json" />
+      </div>
+      <div>
+        <button onclick="plot_selected_seq()">Plot Sequence</button>
+      </div>
+    </div>
+    
+  </body>
+
+</html>

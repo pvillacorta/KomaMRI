@@ -5,7 +5,6 @@ if nprocs() <= 1
 end
 
 @everywhere begin
-   cd("/home/export/personal/pvilayl/KomaMRI.jl")
    using Pkg
    Pkg.activate(".")
    Pkg.instantiate()
@@ -27,7 +26,7 @@ end
 # to access to them from the client, we should make
 # a request to http://serverdir:port/static/filename
 staticfiles("content", "static") 
-dynamicfiles("../WebMRISeq/dis", "dynamic")
+dynamicfiles("../WebMRISeq/dist", "dynamic")
 # ------------------------------- STRUCTS ------------------------------------
 global simulationId = 1
 global simProgress = -1
@@ -128,13 +127,13 @@ end
 end
 
 
-## PLOT SEQUENCE
-# @post "/plot" function(req::HTTP.Request)
-#    data = json(req)
-#    sys = Scanner()
-#    json_to_seq(data,sys)
-#    return HTTP.Response(200,body="Exito")
-# end
+# PLOT SEQUENCE
+@post "/plot" function(req::HTTP.Request)
+   data = json(req)
+   sys = Scanner()
+   json_to_seq(data,sys)
+   return HTTP.Response(200,body="Exito")
+end
 # ---------------------------------------------------------------------------
 
 serve(host="0.0.0.0",port=8085)

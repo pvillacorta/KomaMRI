@@ -17,7 +17,7 @@ KomaMRI.jl is a Julia pacakge for highly-efficient ⚡ MRI simulations. KomaMRI 
 </td>
  <td><b>Features:</b></td>
 </tr>
-<tr>
+<tr> 
 <td>
  
 - Fast simulations with CPU/GPU parallelization 🏃💨

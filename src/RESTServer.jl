@@ -23,11 +23,11 @@ using StructTypes
    using JSON3
 end
 
-
-dynamicfiles("content", "dynamic") # Give access to files in content directory
-                                   # to access to them from the client, we should make
-                                   # a request to http://serverdir:port/dynamic/filename
-
+# Give access to files in content directory
+# to access to them from the client, we should make
+# a request to http://serverdir:port/static/filename
+staticfiles("content", "static") 
+dynamicfiles("../WebMRISeq/dis", "dynamic")
 # ------------------------------- STRUCTS ------------------------------------
 global simulationId = 1
 global simProgress = -1
@@ -43,9 +43,14 @@ end
 
 
 # ---------------------------- API METHODS ---------------------------------
-@get "/" function(req::HTTP.Request)
+@get "/simulator" function(req::HTTP.Request)
    return render_html("content/index.html")
 end
+
+@get "/editor" function(req::HTTP.Request)
+   return render_html("../WebMRISeq/dist/index.html")
+end
+
 
 @get "/greet" function(req::HTTP.Request)
    return "Hello world!"

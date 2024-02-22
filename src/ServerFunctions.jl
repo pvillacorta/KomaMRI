@@ -122,8 +122,33 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
 
       elseif block["cod"] == 1       # <------------- Excitation
          print("Excitation\n")
-         
+         rf = block["rf"]
+         shape = rf["shape"]
+         deltaf = rf["deltaf"]
 
+         # Flip angle and duration
+         if haskey(block, "duration") & haskey(rf, "flipAngle")
+            duration = block["duration"]
+            flipAngle = rf["flipAngle"]
+
+         # Amplitude and duration
+         elseif haskey(block, "duration") & haskey(rf, "b1Module")
+            duration = block["duration"]  
+            amplitude = rf["b1Module"]
+            # 1. Rectangle (hard)
+            if shape == 0
+               EX = PulseDesigner.RF_hard(amplitude, duration, sys; Δf=deltaf)
+            # 2. Sinc
+            elseif shape == 1
+               EX = PulseDesigner.RF_sinc(amplitude, duration, sys; Δf=deltaf)
+            end
+        
+         # Flip angle and amplitude
+         elseif haskey(rf, "flipAngle") & haskey(rf, "b1Module")
+            flipAngle = rf["flipAngle"]
+            amplitude = rf["b1Module"]
+
+         end
 
       elseif block["cod"] == 2       # <------------- Delay
          print("Delay\n")

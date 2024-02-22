@@ -98,6 +98,27 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
    
    blocks = json_seq["blocks"]
 
+   function get_gradients(block::JSON3.Object, rep::Int)
+      gradients = block["gradients"]
+      GR = reshape([Grad(0,0) for i in 1:3],(3,1))
+      for grad in gradients
+         axis        = grad["axis"]
+         delay       = grad["delay"]
+         rise        = grad["rise"]
+         flatTopTime = grad["flatTop"]
+         amplitude   = grad["amplitude"]
+         step        = grad["step"]
+
+         idx = axis == "x" ? 1 :
+               axis == "y" ? 2 :
+               axis == "z" ? 3 : 
+               -1
+
+         GR[idx] = Grad(amplitude + rep*step, flatTopTime, rise, delay)
+      end
+      return GR
+   end
+
    function isChild(index::Int)
       for i in eachindex(blocks)
          children = blocks[i]["children"]
@@ -120,10 +141,10 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
             end
          end
 
-      elseif block["cod"] == 1       # <------------- Excitation
+      elseif block["cod"] == 1       # <-------------------------- Excitation
          print("Excitation\n")
-         rf = block["rf"]
-         shape = rf["shape"]
+         rf     = block["rf"][1]
+         shape  = rf["shape"]
          deltaf = rf["deltaf"]
 
          # Flip angle and duration
@@ -131,39 +152,68 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
             duration = block["duration"]
             flipAngle = rf["flipAngle"]
 
+            aux_amplitude = 1e-6
+            # 1. Rectangle (hard)
+            if shape == 0
+               AUX = PulseDesigner.RF_hard(aux_amplitude, duration, sys)
+            # 2. Sinc
+            elseif shape == 1
+               AUX = PulseDesigner.RF_sinc(aux_amplitude, duration, sys)
+            end
+
+            amplitude = aux_amplitude * (flipAngle/get_flip_angles(AUX)[1])
+
          # Amplitude and duration
          elseif haskey(block, "duration") & haskey(rf, "b1Module")
             duration = block["duration"]  
             amplitude = rf["b1Module"]
-            # 1. Rectangle (hard)
-            if shape == 0
-               EX = PulseDesigner.RF_hard(amplitude, duration, sys; Δf=deltaf)
-            # 2. Sinc
-            elseif shape == 1
-               EX = PulseDesigner.RF_sinc(amplitude, duration, sys; Δf=deltaf)
-            end
         
          # Flip angle and amplitude
          elseif haskey(rf, "flipAngle") & haskey(rf, "b1Module")
             flipAngle = rf["flipAngle"]
             amplitude = rf["b1Module"]
 
+            aux_duration = 1e-3
+            # 1. Rectangle (hard)
+            if shape == 0
+               AUX = PulseDesigner.RF_hard(amplitude, aux_duration, sys)
+            # 2. Sinc
+            elseif shape == 1
+               AUX = PulseDesigner.RF_sinc(amplitude, aux_duration, sys)
+            end
+
+            duration = aux_duration * (flipAngle/get_flip_angles(AUX)[1])
          end
 
-      elseif block["cod"] == 2       # <------------- Delay
+         # 1. Rectangle (hard)
+         if shape == 0
+            EX = PulseDesigner.RF_hard(amplitude, duration, sys; Δf=deltaf)
+         # 2. Sinc
+         elseif shape == 1
+            EX = PulseDesigner.RF_sinc(amplitude, duration, sys; Δf=deltaf)[1]
+         end
+
+         EX.GR = get_gradients(block, rep)
+         seq += EX
+
+      elseif block["cod"] == 2       # <-------------------------- Delay
          print("Delay\n")
 
-      elseif block["cod"] in [3,4]   # <------------- Dephase or Readout
+         duration = block["duration"]
+         DELAY = Delay(duration)
+         seq += DELAY
+
+      elseif block["cod"] in [3,4]   # <-------------------------- Dephase or Readout
          if block["cod"] == 3
             print("Dephase\n")
          elseif block["cod"] == 4
             print("Readout\n")
          end
 
-      elseif block["cod"] == 5       # <------------- EPI
+      elseif block["cod"] == 5       # <-------------------------- EPI
          print("EPI\n")
 
-      elseif block["cod"] == 6       # <------------- GRE  
+      elseif block["cod"] == 6       # <-------------------------- GRE  
          print("GRE\n")
 
       end 

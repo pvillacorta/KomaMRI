@@ -91,11 +91,13 @@ mat_to_seq(mat,sys::Scanner) = begin
    seq
 end
 
-"Convert a json string containing sequence information into a KomaMRICore.Sequence object"
+"Convert a json string containing sequence information into a KomaMRIBase.Sequence object"
 json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
    global seq = Sequence()
    # global R = rotation_matrix()
    
+   N_x = 0
+
    blocks = json_seq["blocks"]
 
    function get_gradients(block::JSON3.Object, rep::Int)
@@ -106,13 +108,18 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
          delay       = grad["delay"]
          rise        = grad["rise"]
          flatTopTime = grad["flatTop"]
-         amplitude   = grad["amplitude"]
-         step        = grad["step"]
+         amplitude   = grad["amplitude"] + rep*grad["step"]
 
          idx = axis == "x" ? 1 :
                axis == "y" ? 2 :
                axis == "z" ? 3 : 
                -1
+
+         if amplitude > sys.Gmax
+            error("G=$(amplitude) mT/m exceeds Gmax=$(sys.Gmax) mT/m")
+         elseif amplitude/rise > sys.Smax
+            error("Slew rate=$(amplitude/rise) mT/m/ms exceeds Smax=$(sys.Smax) mT/m/ms")
+         end
 
          GR[idx] = Grad(amplitude + rep*step, flatTopTime, rise, delay)
       end
@@ -143,6 +150,7 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
 
       elseif block["cod"] == 1       # <-------------------------- Excitation
          print("Excitation\n")
+
          rf     = block["rf"][1]
          shape  = rf["shape"]
          deltaf = rf["deltaf"]
@@ -210,8 +218,31 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
             print("Readout\n")
          end
 
+         DEPHASE = Sequence()
+         DEPHASE.GR = get_gradients(block, rep)
+
+         if block["cod"] == 4
+            DEPHASE.ADC[1].N = block["samples"]
+            DEPHASE.ADC[1].T = block["duration"]
+            DEPHASE.ADC[1].delay = block["adcDelay"]
+
+            N_x = block["samples"]
+         end
+
+         seq += DEPHASE
+
       elseif block["cod"] == 5       # <-------------------------- EPI
          print("EPI\n")
+
+         fov = block["fov"]
+         lines = block["lines"]
+         samples = block["samples"]
+
+         N_x = block["samples"]
+
+         EPI = PulseDesigner.EPI(fov, lines, sys)
+
+         seq += EPI
 
       elseif block["cod"] == 6       # <-------------------------- GRE  
          print("GRE\n")
@@ -225,101 +256,22 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
       end
    end
 
+   seq.DEF = Dict("Nx"=>N_x,"Ny"=>N_x,"Nz"=>1)
+
+   return seq
 end
 
-#    global seq = Sequence()
-#    global R = rotation_matrix()
-
-#    for i=1:size(mat)[2]
-
-#       if mat[1,i] == 1 # Excitation
-
-#          B1 = mat[6,i] + mat[7,i]im;
-#          duration = mat[2,i]
-#          Δf = mat[8,i];
-
-#          # 1. Hard RF Pulse
-#          if mat[10,i] == 0
-#             EX = PulseDesigner.RF_hard(B1, duration, sys; G = [mat[3,i] mat[4,i] mat[5,i]], Δf)
-
-#          # 2. Sinc pulse
-#          elseif mat[10,i] == 1
-#             EX = PulseDesigner.RF_sinc(B1, duration, sys; G=[mat[3,i] mat[4,i] mat[5,i]], Δf)[1]
-#          end
-
-#          seq += EX
-
-#          G = EX.GR.A; G = normalize([G[1];G[2];G[3]]);
-#          R = rotation_matrix(G)
-
-
-#       elseif mat[1,i] == 2 # Delay
-#          DELAY = Delay(mat[2,i])
-#          seq += DELAY
-
-
-#       elseif ((mat[1,i] == 3) || (mat[1,i] == 4)) # Dephase or Readout
-#          AUX = Sequence()
-
-#          ζ = abs(sum([mat[3,i],mat[4,i],mat[5,i]])) / sys.Smax
-#          ϵ1 = mat[2,i]/(mat[2,i]+ζ)
-
-#          AUX.GR[1] = Grad(mat[3,i],mat[2,i],ζ)
-#          AUX.GR[2] = ϵ1*Grad(mat[4,i],mat[2,i],ζ)
-#          AUX.GR[3] = Grad(mat[5,i],mat[2,i],ζ)
-
-#          AUX.DUR = convert(Vector{Float64}, AUX.DUR)
-#          AUX.DUR[1] = mat[2,i] + 2*ζ
-
-#          AUX.ADC[1].N = (mat[1,i] == 3) ? 0 : trunc(Int,mat[10,i])     # No samples during Dephase interval
-#          AUX.ADC[1].T = mat[2,i]                                       # The duration must be explicitly stated
-#          AUX.ADC[1].delay = ζ
-
-#          if(mat[1,i]==4)
-#              global N_x = global N_y = trunc(Int,mat[10,i])
-#          end
-
-#          seq += AUX
-
-
-#       elseif mat[1,i] == 5 # EPI
-#          FOV = mat[9,i]
-#          N = trunc(Int,mat[10,i])
-
-#          global N_x = global N_y = N
-
-#          EPI = PulseDesigner.EPI(FOV, N, sys)
-#          seq += EPI
-
-      
-#       elseif mat[1,i] == 6 # GRE
-#          FOV = mat[9,i]
-#          N = trunc(Int,mat[10,i])
-
-#          global N_x = global N_y = N
-
-#          TE = mat[6,i]
-#          TR = mat[7,i]
-#          α = mat[2,i]
-
-#          print("FOV: ", FOV, '\n')
-#          print("N: ", N, '\n')
-#          print("TE: ", TE, '\n')
-#          print("TR: ", TR, '\n')
-#          print("α: ", α, '\n')
-
-#          R = rotation_matrix([mat[3,i],mat[4,i],mat[5,i]])
-#          GRE = PulseDesigner.GRE(FOV,N,TE,TR,α,sys;Δf=mat[8,i])
-
-#          seq += GRE
-#       end
-
-#    end
-
-#    seq.DEF = Dict("Nx"=>N_x,"Ny"=>N_y,"Nz"=>1)
-
-#    R*seq
-
+"Convert a json string containing scanner information into a KomaMRIBase.Scanner object"
+json_to_scanner(json_scanner::JSON3.Object) = begin
+   sys = Scanner(
+      B0 = json_scanner["b0"],
+      B1 = json_scanner["b1"],
+      Gmax = json_scanner["gmax"],
+      Smax = json_scanner["smax"],
+      ADC_Δt = json_scanner["deltat"],
+   )
+   return sys
+end
 
 "Obtain the reconstructed image from raw_signal (obtained from simulation)"
 recon(raw_signal) = begin

@@ -123,14 +123,22 @@ function plot_selected_seq(){
     });
 }
 
-function plot_seq(seq_json){
-    const obj = JSON.parse(seq_json);
+function plot_seq(scanner_json, seq_json){
+    const scannerObj = JSON.parse(scanner_json);
+    const seqObj = JSON.parse(seq_json);
+
+    // Combina los dos objetos en uno solo
+    const combinedObj = {
+        scanner: scannerObj,
+        sequence: seqObj
+    };
+
     fetch("/plot",{
         method: "POST",
         headers:{
             "Content-type": "application/json",
         },
-        body: JSON.stringify(obj)})
+        body: JSON.stringify(combinedObj)})
     .then(res => {
         if (res.status === 200) {
             console.log(res.body);

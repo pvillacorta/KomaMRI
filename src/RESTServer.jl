@@ -129,9 +129,12 @@ end
 
 # PLOT SEQUENCE
 @post "/plot" function(req::HTTP.Request)
-   data = json(req)
-   sys = Scanner()
-   json_to_seq(data,sys)
+   scanner_data = json(req)["scanner"]
+   seq_data = json(req)["sequence"]
+   sys = json_to_scanner(scanner_data)
+   seq = json_to_seq(sys, seq_data)
+   display(seq)
+   plot_seq(seq)
    return HTTP.Response(200,body="Exito")
 end
 # ---------------------------------------------------------------------------

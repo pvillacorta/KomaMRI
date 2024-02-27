@@ -132,10 +132,11 @@ end
    scanner_data = json(req)["scanner"]
    seq_data = json(req)["sequence"]
    sys = json_to_scanner(scanner_data)
-   seq = json_to_seq(sys, seq_data)
-   display(seq)
-   plot_seq(seq)
-   return HTTP.Response(200,body="Exito")
+   seq = json_to_seq(seq_data, sys)
+   p = plot_seq(seq)
+   html_buffer = IOBuffer()
+   KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
+   return HTTP.Response(200,body=take!(html_buffer))
 end
 # ---------------------------------------------------------------------------
 

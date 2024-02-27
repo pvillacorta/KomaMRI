@@ -151,6 +151,7 @@ function plot_seq(scanner_json, seq_json){
         // Establecer el contenido del iframe con el HTML recibido
         var iframe = document.getElementById("seq-diagram")
         iframe.srcdoc = html;
+        iframe.style.visibility = "visible";
     })
     .catch(error => {
         console.error("Error en la solicitud:", error);

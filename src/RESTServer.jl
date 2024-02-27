@@ -133,7 +133,7 @@ end
    seq_data = json(req)["sequence"]
    sys = json_to_scanner(scanner_data)
    seq = json_to_seq(seq_data, sys)
-   p = plot_seq(seq)
+   p = plot_seq(seq; darkmode=true)
    html_buffer = IOBuffer()
    KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
    return HTTP.Response(200,body=take!(html_buffer))

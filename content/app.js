@@ -125,7 +125,7 @@ function plot_selected_seq(){
 
 function plot_seq(scanner_json, seq_json){
     const scannerObj = JSON.parse(scanner_json);
-    const seqObj = JSON.parse(seq_json);
+    const seqObj     = JSON.parse(seq_json);
 
     // Combina los dos objetos en uno solo
     const combinedObj = {
@@ -133,21 +133,27 @@ function plot_seq(scanner_json, seq_json){
         sequence: seqObj
     };
 
-    fetch("/plot",{
+    fetch("/plot", {
         method: "POST",
-        headers:{
+        headers: {
             "Content-type": "application/json",
         },
-        body: JSON.stringify(combinedObj)})
+        body: JSON.stringify(combinedObj)
+    })
     .then(res => {
-        if (res.status === 200) {
-            console.log(res.body);
+        if (res.ok) {
+            return res.text();
         } else {
-            // Manejar el error
+            throw new Error('Error en la solicitud');
         }
     })
+    .then(html => {
+        // Establecer el contenido del iframe con el HTML recibido
+        var iframe = document.getElementById("seq-diagram")
+        iframe.srcdoc = html;
+    })
     .catch(error => {
-        console.error("Error:", error);
+        console.error("Error en la solicitud:", error);
     });
 }
 

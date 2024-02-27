@@ -121,7 +121,7 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
             error("Slew rate=$(amplitude/rise) mT/m/ms exceeds Smax=$(sys.Smax) mT/m/ms")
          end
 
-         GR[idx] = Grad(amplitude + rep*step, flatTopTime, rise, delay)
+         GR[idx] = Grad(amplitude, flatTopTime, rise, delay)
       end
       return GR
    end
@@ -202,6 +202,7 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
          end
 
          EX.GR = get_gradients(block, rep)
+         EX.RF[1].delay = maximum(EX.GR.rise)
          seq += EX
 
       elseif block["cod"] == 2       # <-------------------------- Delay
@@ -258,7 +259,7 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
 
    seq.DEF = Dict("Nx"=>N_x,"Ny"=>N_x,"Nz"=>1)
 
-   return seq
+   return seq[2:end]
 end
 
 "Convert a json string containing scanner information into a KomaMRIBase.Scanner object"

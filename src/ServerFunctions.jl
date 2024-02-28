@@ -259,9 +259,8 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
          rf    = block["rf"][1]
          α     = rf["flipAngle"]
          Δf    = rf["deltaf"]
-         shape = rf["shape"]
-         
-         GRE = PulseDesigner.GRE(fov, lines, te, tr, α, sys; Δf=Δf, shape=shape)
+
+         GRE = PulseDesigner.GRE(fov, lines, te, tr, α, sys; Δf=Δf)
 
          seq += GRE
       end 

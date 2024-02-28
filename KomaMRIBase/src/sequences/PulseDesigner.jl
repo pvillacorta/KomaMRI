@@ -350,7 +350,7 @@ end
 """
 Basic gradient-echo (GRE) Sequence
 """
-function GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G=[0,0,0], Δf=0, shape=1)
+function GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G=[0,0,0], Δf=0)
 	# Excitation (Sinc pulse) ----------------------------------
 	# α = γ ∫(0-T) B1(t)dt 
 	# ----------------------
@@ -361,15 +361,9 @@ function GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G
 	Gss = 2e-3     	# Slice-select gradient
 
 	# With T = 3ms, we need B1 = 8,69e-8 T to produce a flip angle α = 1°
-	if shape == 1
-		B_1° = 8.6938e-8
-		B1 = α*B_1°
-		EX = RF_sinc(B1, T_rf, sys; G=[0,0,Gss], Δf=Δf)
-	elseif shape == 0
-		α = (2π*α)/360
-		B1 =  α/(2π*γ*T_rf)
-		EX = RF_hard(B1, T_rf, sys; G=[0,0,Gss], Δf=Δf)
-	end
+	B_1° = 8.6938e-8
+	B1 = α*B_1°
+	EX = RF_sinc(B1, T_rf, sys; G=[0,0,Gss], Δf=Δf)
 
 	# Acquisition ----------------------------------------------
 	# Square acquisition (Nx = Ny = N) 

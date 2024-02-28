@@ -105,7 +105,6 @@ function requestResult(loc){
 
                     document.getElementById('myProgress').style.visibility = "collapse";
                     document.getElementById("myBar").style.width = 0 + "%";
-                    document.getElementById("myBar").style.height = 0 + "%";
 
                     const imgData = new ImageData(Uint8ClampedArray.from(imgArray), N, N);
                     context.putImageData(imgData, 0, 0);

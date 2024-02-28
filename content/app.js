@@ -5,14 +5,14 @@ function komaMRISim(){
     // Input parameters: mat (-> Sequence) & vec (-> Scanner)
     // This parameters will come from the sequence editor (GUI) in future versions
     var mat  = [[1,        2,      5],           // cod
-                [5.87e-4,  0.01,   0],           // dur
+                [1e-3,  0.01,      0],           // dur
                 [0,        0,      0],           // gx
                 [0,        0,      0],           // gy
                 [1,        0,      0],           // gz
                 [10e-6,    0,      0],           // b1x
                 [0,        0,      0],           // b1y
                 [0,        0,      0],           // Δf
-                [0,        0,      0.4],         // fov
+                [0,        0,      0.25],         // fov
                 [0,        0,      201]];        // n
 
     var vec  =  [1.5,          //B0
@@ -105,6 +105,7 @@ function requestResult(loc){
 
                     document.getElementById('myProgress').style.visibility = "collapse";
                     document.getElementById("myBar").style.width = 0 + "%";
+                    document.getElementById("myBar").style.height = 0 + "%";
 
                     const imgData = new ImageData(Uint8ClampedArray.from(imgArray), N, N);
                     context.putImageData(imgData, 0, 0);

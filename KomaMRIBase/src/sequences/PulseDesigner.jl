@@ -346,10 +346,11 @@ function EPI_example(; sys=Scanner())
 end
 
 
+
 """
 Basic gradient-echo (GRE) Sequence
 """
-GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G=[0,0,0], Δf=0, shape=1) = begin
+function GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G=[0,0,0], Δf=0, shape=1)
 	# Excitation (Sinc pulse) ----------------------------------
 	# α = γ ∫(0-T) B1(t)dt 
 	# ----------------------
@@ -363,11 +364,11 @@ GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G=[0,0,0],
 	if shape == 1
 		B_1° = 8.6938e-8
 		B1 = α*B_1°
-		EX = RF_sinc(B1,T_rf,sys;G=[0,0,Gss],Δf=Δf)
-	else if shape == 0
+		EX = RF_sinc(B1, T_rf, sys; G=[0,0,Gss], Δf=Δf)
+	elseif shape == 0
 		α = (2π*α)/360
 		B1 =  α/(2π*γ*T_rf)
-		EX = RF_hard(B1,T_rf,sys)
+		EX = RF_hard(B1, T_rf, sys; G=[0,0,Gss], Δf=Δf)
 	end
 
 	# Acquisition ----------------------------------------------
@@ -422,7 +423,7 @@ GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G=[0,0,0],
 		gre += RO + Delay(delay_TR)
 	end
 	gre.DEF = Dict("Nx"=>N,"Ny"=>N,"Nz"=>1,"Name"=>"gre"*string(N)*"x"*string(N),"FOV"=>[FOV, FOV, 0])
-	gre[2:end]
+	return gre[2:end]
 end
 
 

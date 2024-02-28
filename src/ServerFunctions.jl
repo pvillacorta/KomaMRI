@@ -248,6 +248,22 @@ json_to_seq(json_seq::JSON3.Object, sys::Scanner) = begin
       elseif block["cod"] == 6       # <-------------------------- GRE  
          print("GRE\n")
 
+         fov = block["fov"]
+         lines = block["lines"]
+         samples = block["samples"]
+
+         t  = block["t"][1]
+         te = t["te"]
+         tr = t["tr"]
+
+         rf    = block["rf"][1]
+         α     = rf["flipAngle"]
+         Δf    = rf["deltaf"]
+         shape = rf["shape"]
+
+         GRE = PulseDesigner.GRE(fov, lines, te, tr, α, sys; Δf=Δf shape=shape)
+
+         seq += GRE
       end 
    end
 

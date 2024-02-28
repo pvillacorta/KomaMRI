@@ -346,5 +346,85 @@ function EPI_example(; sys=Scanner())
 end
 
 
-export EPI, radial_base, EPI_example
+"""
+Basic gradient-echo (GRE) Sequence
+"""
+GRE(FOV::Float64, N::Int, TE::Float64, TR::Float64, α, sys::Scanner; G=[0,0,0], Δf=0, shape=1) = begin
+	# Excitation (Sinc pulse) ----------------------------------
+	# α = γ ∫(0-T) B1(t)dt 
+	# ----------------------
+	# We need to obtain B1 from flip angle α and a generic T=3ms duration
+	# i.e. we need to resolve the equation above
+
+	T_rf = 3e-3   	# Pulse duration
+	Gss = 2e-3     	# Slice-select gradient
+
+	# With T = 3ms, we need B1 = 8,69e-8 T to produce a flip angle α = 1°
+	if shape == 1
+		B_1° = 8.6938e-8
+		B1 = α*B_1°
+		EX = RF_sinc(B1,T_rf,sys;G=[0,0,Gss],Δf=Δf)
+	else if shape == 0
+		α = (2π*α)/360
+		B1 =  α/(2π*γ*T_rf)
+		EX = RF_hard(B1,T_rf,sys)
+	end
+
+	# Acquisition ----------------------------------------------
+	# Square acquisition (Nx = Ny = N) 
+	# PHASE
+	ζ_phase = EX[2].GR[1].rise
+	T_phase = EX[2].GR[1].T
+
+	Δk = (1/FOV)
+	FOVk = (N-1)*Δk
+	Gx = Gy = FOVk/(γ*(T_phase + ζ_phase))
+	step = Δk/(γ*(T_phase + ζ_phase))
+
+	"""
+	print("Δk = ", Δk, " m⁻¹\n")
+	print("FOVk = ", FOVk, " m⁻¹\n")
+	print("Gx = ", Gx*1e3, " mT/m\n")
+	print("step = ", step*1e3, " mT/m\n")
+	"""
+
+	# FE and Readout
+	TE_min = (1/2) * ( sys.ADC_Δt*(N-1) + 2*((EX.DUR[1]/2) + EX.DUR[2]) )
+	if TE < TE_min
+		print("Error: TE must be greater than TE_min = ", TE_min*1e3, " ms\n")
+		return
+	end
+
+	ACQ_dur = 2 * (TE - ( (EX.DUR[1]/2) + EX.DUR[2] ))
+	G_ro = FOVk/(γ*ACQ_dur)
+	ζ_ro = G_ro / sys.Smax
+	T_ro = ACQ_dur - ζ_ro
+	GR = reshape([Grad(G_ro,T_ro,ζ_ro), Grad(0,0), Grad(0,0)],(3,1))
+	RO = Sequence(GR)
+	RO.ADC[1] = ADC(N, T_ro, ζ_ro)
+	delay_TR = TR - (EX.DUR[1] + EX.DUR[2] + RO.DUR[1])
+	
+	"""
+	print("ACQ_dur = ", ACQ_dur*1e3, " ms\n")
+	print("G_ro = ", G_ro*1e3, " mT/m\n")
+	print("ζ = ", ζ_ro*1e3, " ms\n")
+	"""
+
+	gre = Sequence()
+	for i in 0:(N-1)
+		# Excitation and first phase 
+		EX = RF_sinc(B1,T_rf,sys;G=[0,0,Gss],Δf=Δf)
+		EX[end].GR[1].A = -Gx/2
+		EX[end].GR[2].A = -Gy/2 + i*step
+		gre += EX
+		
+		# FE and Readout
+		gre += RO + Delay(delay_TR)
+	end
+	gre.DEF = Dict("Nx"=>N,"Ny"=>N,"Nz"=>1,"Name"=>"gre"*string(N)*"x"*string(N),"FOV"=>[FOV, FOV, 0])
+	gre[2:end]
+end
+
+
+export EPI, GRE, radial_base, EPI_example
 end

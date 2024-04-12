@@ -26,6 +26,7 @@ end
 # to access to them from the client, we should make
 # a request to http://serverdir:port/static/filename
 staticfiles("content", "static") 
+staticfiles("public", "public") 
 dynamicfiles("../WebMRISeq/dist", "dynamic")
 # ------------------------------- STRUCTS ------------------------------------
 global simulationId = 1
